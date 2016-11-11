@@ -14,9 +14,15 @@ class MailApi @Inject() (mailSender: MailerSender) extends Controller {
 
     def send(email: Option[String], name: Option[String], emailType: Option[String]) = Action {
 
-      var result = checkAvailability(email)
-      result = checkAvailability(name)
-      result = checkAvailability(emailType)
+      var result = List(email, name, emailType)
+        .map(checkAvailability)
+        .fold(GoodResult) {
+          (acc: Result, item: Result) =>
+            acc match {
+              case BadResult => acc
+              case _ => item
+            }
+        }
 
       if (result.header.status == Ok.header.status) {
         val body = emailType.get match {
